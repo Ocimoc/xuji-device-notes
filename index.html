@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#173f73" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="续记" />
+    <meta name="description" content="把做过的事留下来，下次不用从头开始。" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+    <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>续记</title>
+  </head>
+  <body>
+    <main class="app-shell" id="app">
+      <header class="topbar">
+        <div><p class="eyebrow">把进度接回来</p><h1>续记</h1></div>
+        <button class="icon-button" id="settings-open" type="button" aria-label="打开设置">•••</button>
+      </header>
+      <div id="status-message" class="status-message" role="status" aria-live="polite" hidden></div>
+      <div id="ios-install-warning" class="install-warning" hidden>
+        <strong>准备在 iPhone 主屏幕使用？</strong>
+        <p>先从 Safari 添加到主屏幕，再从图标打开后开始记。Safari 页面和主屏幕应用的数据可能分开。</p>
+        <button id="ios-install-help" class="text-button" type="button">看操作方法</button>
+      </div>
+      <section class="quick-capture" aria-labelledby="capture-title">
+        <div><p class="section-kicker">随手留下</p><h2 id="capture-title">想到的、做过的，直接丢进来</h2></div>
+        <button class="primary-button" id="capture-open" type="button">记一下</button>
+      </section>
+      <section id="stale-section" class="stale-section" aria-labelledby="stale-title" hidden>
+        <div class="section-heading compact-heading"><div><p class="section-kicker">有一阵没留下记录</p><h2 id="stale-title">要不要从这里接着来？</h2></div></div>
+        <div id="stale-list" class="card-stack"></div>
+      </section>
+      <section aria-labelledby="active-title">
+        <div class="section-heading"><div><p class="section-kicker">进行中 · <span id="active-count">0</span> 件</p><h2 id="active-title">正在保留的事情</h2></div><button class="text-button" id="project-open" type="button">添加事情</button></div>
+        <div id="project-filter-wrap" class="project-filter-wrap" hidden><label class="sr-only" for="project-filter">查找事情</label><input id="project-filter" class="search-input" type="search" autocomplete="off" placeholder="事情多了，在这里找名字" /></div>
+        <div id="active-list" class="card-stack"></div>
+        <div id="active-empty" class="empty-card"><span class="empty-mark" aria-hidden="true">＋</span><h3>先放一件不想弄丢的事</h3><p>不用规划完整，只需要给它一个名字。</p></div>
+        <p id="project-filter-empty" class="empty-inline" hidden>没有找到这件事。</p>
+      </section>
+      <section class="search-section" aria-labelledby="search-title">
+        <div class="section-heading compact-heading"><div><p class="section-kicker">过去留下的</p><h2 id="search-title">查找记录</h2></div></div>
+        <label class="sr-only" for="search-input">搜索原话或事情名称</label>
+        <input id="search-input" class="search-input" type="search" autocomplete="off" placeholder="搜索原话或事情名称" />
+        <div id="search-results" class="record-list"></div>
+      </section>
+      <section id="other-section" class="other-section" aria-labelledby="other-title" hidden>
+        <div class="section-heading compact-heading"><div><p class="section-kicker">暂时放下也没关系</p><h2 id="other-title">其他事情</h2></div></div>
+        <div id="other-list" class="card-stack"></div>
+      </section>
+      <footer class="footer-note">记录只存在这台设备。记得定期导出备份。</footer>
+    </main>
+
+    <dialog id="capture-dialog" class="sheet-dialog" aria-labelledby="capture-dialog-title">
+      <form id="capture-form" class="dialog-content">
+        <div class="dialog-head"><div><p class="section-kicker">原话会完整保存</p><h2 id="capture-dialog-title">记一下</h2></div><button class="close-button" type="button" data-close="capture-dialog" aria-label="关闭">×</button></div>
+        <label for="entry-content">把豆包里的文字粘贴到这里</label>
+        <textarea id="entry-content" name="content" rows="10" maxlength="200000" placeholder="想到什么、做了什么、卡在哪里……直接粘贴原话。" required></textarea>
+        <div class="field-grid">
+          <div class="field"><label for="entry-project">关联事情 <span class="optional">可不选</span></label><select id="entry-project" name="projectId"></select></div>
+          <div class="field"><label for="entry-date">发生日期</label><input id="entry-date" name="occurredOn" type="date" required /></div>
+        </div>
+        <div class="field"><label for="entry-return">下次从哪接 <span class="optional">可留空</span></label><input id="entry-return" name="returnPoint" maxlength="500" type="text" placeholder="不用每次写" /></div>
+        <p class="form-hint">草稿会自动保留，保存后才会进入记录。</p>
+        <button class="action-button" id="entry-save" type="submit">保存原话</button>
+      </form>
+    </dialog>
+
+    <dialog id="project-dialog" class="sheet-dialog" aria-labelledby="project-dialog-title">
+      <form id="project-form" class="dialog-content">
+        <div class="dialog-head"><div><p class="section-kicker">一条想保留的线</p><h2 id="project-dialog-title">添加事情</h2></div><button class="close-button" type="button" data-close="project-dialog" aria-label="关闭">×</button></div>
+        <div class="field"><label for="project-title">叫什么</label><input id="project-title" name="title" maxlength="100" autocomplete="off" placeholder="例如：找工作、学英语" required /></div>
+        <div class="field"><label for="project-reminder">多少天没记录时提醒我看看</label><div class="number-field"><input id="project-reminder" name="reminderDays" type="number" inputmode="numeric" min="1" max="36500" step="1" value="14" required /><span>天</span></div><label class="check-row" for="project-no-reminder"><input id="project-no-reminder" type="checkbox" /><span>不提醒</span></label></div>
+        <p class="form-hint">提醒只会在打开应用时出现，不会发手机通知。</p>
+        <button class="action-button" id="project-save" type="submit">保存事情</button>
+      </form>
+    </dialog>
+
+    <dialog id="detail-dialog" class="sheet-dialog" aria-labelledby="detail-title">
+      <div class="dialog-content"><div class="dialog-head"><div><p class="section-kicker" id="detail-subtitle"></p><h2 id="detail-title"></h2></div><button class="close-button" type="button" data-close="detail-dialog" aria-label="关闭">×</button></div><div id="detail-body"></div></div>
+    </dialog>
+
+    <dialog id="settings-dialog" class="sheet-dialog" aria-labelledby="settings-title">
+      <div class="dialog-content">
+        <div class="dialog-head"><div><p class="section-kicker">这台设备上的数据</p><h2 id="settings-title">设置与备份</h2></div><button class="close-button" type="button" data-close="settings-dialog" aria-label="关闭">×</button></div>
+        <section class="setting-block"><h3>备份到“文件”</h3><p>导出一个备份文件。你可以保存在 iPhone 的“文件”里，或自己选 iCloud 云盘。应用不会自动上传你的记录。</p><button class="secondary-button" id="export-button" type="button">导出备份</button><button class="secondary-button" id="share-button" type="button" hidden>分享备份文件</button><p id="last-backup" class="microcopy"></p></section>
+        <section class="setting-block"><h3>恢复记录</h3><p>导入会合并缺少的内容，不会覆盖手机上已有的记录。</p><label class="secondary-button file-label" for="import-file">选择备份文件</label><input id="import-file" type="file" accept=".json,application/json" hidden /></section>
+        <section class="setting-block"><h3>误删的记录</h3><p>删除后先放在回收站，可以找回。</p><button class="secondary-button" id="trash-open" type="button">打开回收站</button></section>
+        <section class="setting-block install-help"><h3>放到 iPhone 主屏幕</h3><p>用 Safari 打开本页，点“分享”，再选“添加到主屏幕”。之后从主屏幕图标打开。Safari 页面和主屏幕应用的数据可能分开；如果已在 Safari 记了内容，先在 Safari 导出，再从主屏幕应用导入。</p></section>
+        <p class="privacy-note">应用不创建账号，也不做云同步。浏览器数据被清理、换手机或移除应用时，未备份的记录可能丢失。</p>
+      </div>
+    </dialog>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
