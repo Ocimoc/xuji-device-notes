@@ -12,6 +12,7 @@ let draft = null;
 let draftTimer = null;
 let draftWrite = Promise.resolve();
 let noticeTimer = null;
+let pageScrollY = null;
 const DRAFT_KEY = "xuji-temporary-draft";
 
 function node(tag, className, content) {
@@ -43,12 +44,31 @@ function show(dialogId) {
   const dialog = $("#" + dialogId);
   const message = dialog.querySelector(".dialog-notice");
   if (message) message.hidden = true;
-  if (!dialog.open) dialog.showModal();
+  if (!dialog.open) {
+    fitDialogsToScreen();
+    const scrollY = window.scrollY;
+    dialog.showModal();
+    if (pageScrollY === null) {
+      pageScrollY = scrollY;
+      document.body.style.top = "-" + pageScrollY + "px";
+      document.body.classList.add("dialog-open");
+    }
+  }
 }
 
 function close(dialogId) {
   const dialog = $("#" + dialogId);
   if (dialog.open) dialog.close();
+  restorePageScroll();
+}
+
+function restorePageScroll() {
+  if (pageScrollY === null || document.querySelector("dialog[open]")) return;
+  const previous = pageScrollY;
+  pageScrollY = null;
+  document.body.classList.remove("dialog-open");
+  document.body.style.top = "";
+  window.scrollTo(0, previous);
 }
 
 function fitDialogsToScreen() {
@@ -385,7 +405,7 @@ function openProjectDetail(id) {
   const project = projects.find(item => item.id === id);
   if (!project) return;
   $("#detail-title").textContent = project.title;
-  $("#detail-subtitle").textContent = statusText(project.status) + " · " + (project.reminderDays ? project.reminderDays + " 天未记录时提示" : "不提醒");
+  $("#detail-subtitle").textContent = statusText(project.status) + " · " + (project.reminderDays ? project.reminderDays + " 天未记录时首页提示" : "不提醒");
   const body = $("#detail-body");
   body.replaceChildren();
   const returnBlock = node("div", "detail-block");
@@ -403,7 +423,7 @@ function openProjectDetail(id) {
   returnActions.append(button("保存返回点", "save-return", id));
   body.append(returnLabel, returnInput, returnActions);
   const reminderBlock = node("div", "detail-reminder");
-  const reminderLabel = node("label", "", "多少天没记录时提醒我看看");
+  const reminderLabel = node("label", "", "打开续记时，多少天没记录就在首页提示");
   reminderLabel.htmlFor = "detail-reminder-days";
   const reminderNumber = node("div", "number-field");
   const reminderInput = node("input");
@@ -744,6 +764,9 @@ async function start() {
   }
 
   fitDialogsToScreen();
+  for (const dialog of document.querySelectorAll(".sheet-dialog")) {
+    dialog.addEventListener("close", restorePageScroll);
+  }
   if (window.visualViewport) {
     window.visualViewport.addEventListener("resize", fitDialogsToScreen);
     window.visualViewport.addEventListener("scroll", fitDialogsToScreen);
@@ -765,6 +788,9 @@ async function start() {
   $("#project-form").addEventListener("submit", saveProject);
   $("#search-input").addEventListener("input", renderSearch);
   $("#project-filter").addEventListener("input", render);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) render();
+  });
   for (const field of $("#capture-form").querySelectorAll("textarea, input, select")) {
     field.addEventListener("input", scheduleDraft);
     field.addEventListener("change", scheduleDraft);

@@ -25,6 +25,8 @@ body {
     var(--canvas);
 }
 
+body.dialog-open { position: fixed; left: 0; right: 0; width: 100%; overflow: hidden; }
+
 button, input, textarea, select { font: inherit; }
 button { min-height: 44px; }
 
@@ -168,13 +170,13 @@ h3 { font-size: 1rem; }
 .footer-note { margin: 36px 0 0; padding-bottom: env(safe-area-inset-bottom); color: var(--muted); font-size: .81rem; line-height: 1.55; text-align: center; }
 .empty-inline { margin: 12px 0; color: var(--muted); line-height: 1.5; }
 
-.sheet-dialog { position: fixed; inset: auto 0 var(--dialog-bottom-gap, 0px); width: min(100%, 720px); max-width: none; max-height: min(calc(var(--dialog-visible-height, 100dvh) - 8px), 900px); margin: 0 auto; padding: 0; border: 0; border-radius: 22px 22px 0 0; background: #fff; box-shadow: 0 -20px 80px rgba(7,24,48,.22); overflow: auto; overscroll-behavior: contain; }
+.sheet-dialog { position: fixed; inset: auto 0 var(--dialog-bottom-gap, 0px); width: min(100%, 720px); max-width: none; max-height: min(calc(var(--dialog-visible-height, 100dvh) - 8px), 900px); margin: 0 auto; padding: 0; border: 0; border-radius: 22px 22px 0 0; background: #fff; box-shadow: 0 -20px 80px rgba(7,24,48,.22); overflow: hidden; }
 .sheet-dialog::backdrop { background: rgba(8,26,49,.47); }
-.dialog-content { padding: 18px 16px calc(22px + env(safe-area-inset-bottom)); }
+.dialog-content { max-height: min(calc(var(--dialog-visible-height, 100dvh) - 8px), 900px); padding: 0 16px calc(22px + env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
 #capture-dialog .dialog-content { padding-bottom: 0; }
-.dialog-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; margin-bottom: 16px; }
+.dialog-head { position: sticky; top: 0; z-index: 3; display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; margin: 0 -16px 16px; padding: 18px 16px 12px; border-bottom: 1px solid var(--line); background: #fff; }
 .dialog-head h2 { font-size: 1.45rem; }
-.close-button { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; border-radius: 13px; background: #edf3fa; color: var(--accent); font-size: 1.5rem; cursor: pointer; }
+.close-button { display: grid; place-items: center; min-width: 60px; height: 44px; padding: 0 10px; flex: none; border: 0; border-radius: 13px; background: #edf3fa; color: var(--accent); font-size: .92rem; font-weight: 750; cursor: pointer; }
 .dialog-content label { display: block; font-weight: 720; margin-bottom: 7px; }
 .dialog-content textarea { display: block; min-height: 150px; max-height: 40dvh; resize: vertical; line-height: 1.55; }
 .field { margin-top: 14px; }
