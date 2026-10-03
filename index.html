@@ -29,7 +29,7 @@
         <button id="ios-install-help" class="text-button" type="button">看操作方法</button>
       </div>
       <section class="quick-capture" aria-labelledby="capture-title">
-        <div><p class="section-kicker">随手留下</p><h2 id="capture-title">想到的、做过的，直接丢进来</h2></div>
+        <div><p class="section-kicker">随手留下</p><h2 id="capture-title">想到的、做过的，写一条就好</h2><p class="quick-help">不用先添加事情。</p></div>
         <button class="primary-button" id="capture-open" type="button">记一下</button>
       </section>
       <section id="stale-section" class="stale-section" aria-labelledby="stale-title" hidden>
@@ -38,6 +38,7 @@
       </section>
       <section aria-labelledby="active-title">
         <div class="section-heading"><div><p class="section-kicker">进行中 · <span id="active-count">0</span> 件</p><h2 id="active-title">正在保留的事情</h2></div><button class="text-button" id="project-open" type="button">添加事情</button></div>
+        <p class="section-help">“事情”用来把相关记录放在一起；不添加也能直接记。</p>
         <div id="project-filter-wrap" class="project-filter-wrap" hidden><label class="sr-only" for="project-filter">查找事情</label><input id="project-filter" class="search-input" type="search" autocomplete="off" placeholder="事情多了，在这里找名字" /></div>
         <div id="active-list" class="card-stack"></div>
         <div id="active-empty" class="empty-card"><span class="empty-mark" aria-hidden="true">＋</span><h3>先放一件不想弄丢的事</h3><p>不用规划完整，只需要给它一个名字。</p></div>
@@ -57,37 +58,38 @@
     </main>
 
     <dialog id="capture-dialog" class="sheet-dialog" aria-labelledby="capture-dialog-title">
-      <form id="capture-form" class="dialog-content">
+      <form id="capture-form" class="dialog-content" novalidate>
         <div class="dialog-head"><div><p class="section-kicker">原话会完整保存</p><h2 id="capture-dialog-title">记一下</h2></div><button class="close-button" type="button" data-close="capture-dialog" aria-label="关闭">×</button></div>
         <label for="entry-content">把豆包里的文字粘贴到这里</label>
-        <textarea id="entry-content" name="content" rows="10" maxlength="200000" placeholder="想到什么、做了什么、卡在哪里……直接粘贴原话。" required></textarea>
+        <textarea id="entry-content" name="content" rows="5" maxlength="200000" placeholder="想到什么、做了什么、卡在哪里……直接粘贴原话。" required></textarea>
         <div class="field-grid">
           <div class="field"><label for="entry-project">关联事情 <span class="optional">可不选</span></label><select id="entry-project" name="projectId"></select></div>
           <div class="field"><label for="entry-date">发生日期</label><input id="entry-date" name="occurredOn" type="date" required /></div>
         </div>
         <div class="field"><label for="entry-return">下次从哪接 <span class="optional">可留空</span></label><input id="entry-return" name="returnPoint" maxlength="500" type="text" placeholder="不用每次写" /></div>
-        <p class="form-hint">草稿会自动保留，保存后才会进入记录。</p>
-        <button class="action-button" id="entry-save" type="submit">保存原话</button>
+        <p class="form-hint">事情和返回点都可以不填；日期已填为今天。草稿会自动保留。</p>
+        <div class="save-bar"><p class="dialog-notice" role="alert" hidden></p><button class="action-button" id="entry-save" type="submit">保存这条记录</button></div>
       </form>
     </dialog>
 
     <dialog id="project-dialog" class="sheet-dialog" aria-labelledby="project-dialog-title">
-      <form id="project-form" class="dialog-content">
+      <form id="project-form" class="dialog-content" novalidate>
         <div class="dialog-head"><div><p class="section-kicker">一条想保留的线</p><h2 id="project-dialog-title">添加事情</h2></div><button class="close-button" type="button" data-close="project-dialog" aria-label="关闭">×</button></div>
         <div class="field"><label for="project-title">叫什么</label><input id="project-title" name="title" maxlength="100" autocomplete="off" placeholder="例如：找工作、学英语" required /></div>
         <div class="field"><label for="project-reminder">多少天没记录时提醒我看看</label><div class="number-field"><input id="project-reminder" name="reminderDays" type="number" inputmode="numeric" min="1" max="36500" step="1" value="14" required /><span>天</span></div><label class="check-row" for="project-no-reminder"><input id="project-no-reminder" type="checkbox" /><span>不提醒</span></label></div>
         <p class="form-hint">提醒只会在打开应用时出现，不会发手机通知。</p>
-        <button class="action-button" id="project-save" type="submit">保存事情</button>
+        <p class="dialog-notice" role="alert" hidden></p><button class="action-button" id="project-save" type="submit">保存事情</button>
       </form>
     </dialog>
 
     <dialog id="detail-dialog" class="sheet-dialog" aria-labelledby="detail-title">
-      <div class="dialog-content"><div class="dialog-head"><div><p class="section-kicker" id="detail-subtitle"></p><h2 id="detail-title"></h2></div><button class="close-button" type="button" data-close="detail-dialog" aria-label="关闭">×</button></div><div id="detail-body"></div></div>
+      <div class="dialog-content"><div class="dialog-head"><div><p class="section-kicker" id="detail-subtitle"></p><h2 id="detail-title"></h2></div><button class="close-button" type="button" data-close="detail-dialog" aria-label="关闭">×</button></div><p class="dialog-notice" role="alert" hidden></p><div id="detail-body"></div></div>
     </dialog>
 
     <dialog id="settings-dialog" class="sheet-dialog" aria-labelledby="settings-title">
       <div class="dialog-content">
         <div class="dialog-head"><div><p class="section-kicker">这台设备上的数据</p><h2 id="settings-title">设置与备份</h2></div><button class="close-button" type="button" data-close="settings-dialog" aria-label="关闭">×</button></div>
+        <p class="dialog-notice" role="alert" hidden></p>
         <section class="setting-block"><h3>备份到“文件”</h3><p>导出一个备份文件。你可以保存在 iPhone 的“文件”里，或自己选 iCloud 云盘。应用不会自动上传你的记录。</p><button class="secondary-button" id="export-button" type="button">导出备份</button><button class="secondary-button" id="share-button" type="button" hidden>分享备份文件</button><p id="last-backup" class="microcopy"></p></section>
         <section class="setting-block"><h3>恢复记录</h3><p>导入会合并缺少的内容，不会覆盖手机上已有的记录。</p><label class="secondary-button file-label" for="import-file">选择备份文件</label><input id="import-file" type="file" accept=".json,application/json" hidden /></section>
         <section class="setting-block"><h3>误删的记录</h3><p>删除后先放在回收站，可以找回。</p><button class="secondary-button" id="trash-open" type="button">打开回收站</button></section>

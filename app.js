@@ -30,22 +30,33 @@ function button(text, action, id, className = "chip-button") {
 }
 
 function notice(message, error = false) {
-  const box = $("#status-message");
+  const dialog = document.querySelector("dialog[open]");
+  const box = dialog?.querySelector(".dialog-notice") || $("#status-message");
   box.textContent = message;
   box.classList.toggle("error", error);
   box.hidden = false;
   clearTimeout(noticeTimer);
-  noticeTimer = setTimeout(() => { box.hidden = true; }, error ? 9000 : 5000);
+  if (!dialog) noticeTimer = setTimeout(() => { box.hidden = true; }, error ? 9000 : 5000);
 }
 
 function show(dialogId) {
   const dialog = $("#" + dialogId);
+  const message = dialog.querySelector(".dialog-notice");
+  if (message) message.hidden = true;
   if (!dialog.open) dialog.showModal();
 }
 
 function close(dialogId) {
   const dialog = $("#" + dialogId);
   if (dialog.open) dialog.close();
+}
+
+function fitDialogsToScreen() {
+  if (!window.visualViewport) return;
+  const visible = window.visualViewport;
+  const bottomGap = Math.max(0, window.innerHeight - visible.height - visible.offsetTop);
+  document.documentElement.style.setProperty("--dialog-visible-height", Math.round(visible.height) + "px");
+  document.documentElement.style.setProperty("--dialog-bottom-gap", Math.round(bottomGap) + "px");
 }
 
 function today() {
@@ -293,8 +304,9 @@ function openCapture(projectId = null) {
   $("#entry-date").value = draft && draft.content && draft.occurredOn ? draft.occurredOn : today();
   $("#entry-date").max = today();
   $("#entry-return").value = draft && draft.content ? draft.returnPoint || "" : "";
+  $("#entry-save").textContent = "保存这条记录";
   show("capture-dialog");
-  $("#entry-content").focus();
+  if (draft?.content) notice("已恢复上次未保存的草稿；请检查关联事情，再点保存。", false);
 }
 
 async function saveEntry(event) {
@@ -334,7 +346,11 @@ async function saveEntry(event) {
       notice("原话已保存，但草稿没能清除。下次打开时可以手动清空。", true);
     });
   } catch (error) {
-    notice("没保存成功，文字还留在输入框里。请重试或先复制出来。", true);
+    saveButton.textContent = "重试保存";
+    const code = error?.name && /^[A-Za-z]+Error$/.test(error.name) ? "（" + error.name + "）" : "";
+    notice(error?.name === "QuotaExceededError"
+      ? "这台设备的网页存储空间可能不足。原话还在输入框里，请先复制出来。"
+      : "没保存成功" + code + "。原话还在输入框里，请重试；若仍失败，先复制出来。", true);
   } finally {
     saveButton.disabled = false;
   }
@@ -343,7 +359,7 @@ async function saveEntry(event) {
 async function saveProject(event) {
   event.preventDefault();
   const title = $("#project-title").value.trim();
-  if (!title) return;
+  if (!title) { notice("先给这件事起个名字。", true); return; }
   const reminderDays = reminderFromFields($("#project-reminder"), $("#project-no-reminder"));
   if (reminderDays === null) return;
   const now = new Date().toISOString();
@@ -411,17 +427,21 @@ function openProjectDetail(id) {
   reminderBlock.append(reminderLabel, reminderNumber, offLabel, button("保存提醒", "save-reminder", id));
   body.append(reminderBlock);
   const actions = node("div", "detail-actions");
+  const manage = node("details", "manage-actions");
+  manage.append(node("summary", "", "暂停、完成或归档"));
+  const manageButtons = node("div", "detail-actions");
   if (project.status === "active") {
-    actions.append(button("记一下", "capture-project", id, "chip-button emphasis"));
-    actions.append(button("暂停", "pause-project", id));
-    actions.append(button("标为完成", "complete-project", id));
-    actions.append(button("归档", "archive-project", id));
+    actions.append(button("记到这件事", "capture-project", id, "chip-button emphasis"));
+    manageButtons.append(button("暂时暂停", "pause-project", id));
+    manageButtons.append(button("标为完成", "complete-project", id));
+    manageButtons.append(button("放进归档", "archive-project", id));
   } else {
-    actions.append(button("继续", "resume-project", id, "chip-button emphasis"));
-    if (project.status !== "archived") actions.append(button("归档", "archive-project", id));
+    actions.append(button("继续这件事", "resume-project", id, "chip-button emphasis"));
+    if (project.status !== "archived") manageButtons.append(button("放进归档", "archive-project", id));
   }
-  actions.append(button("移到回收站", "delete-project", id, "chip-button danger"));
-  body.append(actions, node("h3", "detail-subhead", "这件事的记录"));
+  manageButtons.append(button("移到回收站", "delete-project", id, "chip-button danger"));
+  manage.append(node("p", "microcopy", "暂停、完成和归档都不会删除记录。"), manageButtons);
+  body.append(actions, manage, node("h3", "detail-subhead", "这件事的记录"));
   const related = visibleEntries(id);
   if (!related.length) body.append(node("p", "empty-inline", "还没有记录。"));
   for (const entry of related) body.append(renderRecordCard(entry));
@@ -721,6 +741,12 @@ async function start() {
     $("#project-open").disabled = true;
     $("#search-input").disabled = true;
     return;
+  }
+
+  fitDialogsToScreen();
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", fitDialogsToScreen);
+    window.visualViewport.addEventListener("scroll", fitDialogsToScreen);
   }
 
   $("#capture-open").addEventListener("click", () => openCapture());
